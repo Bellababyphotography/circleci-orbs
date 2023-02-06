@@ -1,30 +1,35 @@
-# Based on https://github.com/CircleCI-Public/circleci-orbs
 version: 2.1
+setup: true
+orbs:
+  orb-tools: circleci/orb-tools@11.5
+  shellcheck: circleci/shellcheck@3.1
 
-executors:
-  cli:
-    docker:
-      - image: circleci/circleci-cli:0.1.2709
+filters: &filters
+  tags:
+    only: /.*/
 
 workflows:
-  version: 2
-  main:
+  lint-pack:
     jobs:
-      - lint
-      - build
-
-jobs:
-  lint:
-    docker:
-      - image: singapore/lint-condo
-    steps:
-      - checkout
-      - run:
-          'yamllint .'
-
-  build:
-    executor: cli
-    steps:
-      - checkout
-      - run: "echo -e \"token: placeholder\nverbose: false > ~/.circleci/cli.yml\""
-      - run: "sh scripts/validate-orbs.sh"
+      - orb-tools/lint:
+          filters: *filters
+      - orb-tools/pack:
+          filters: *filters
+      - orb-tools/review:
+          filters: *filters
+      - shellcheck/check:
+          filters: *filters
+      - orb-tools/publish:
+          orb-name: <namespace>/<orb-name>
+          vcs-type: << pipeline.project.type >>
+          requires:
+            [orb-tools/lint, orb-tools/review, orb-tools/pack, shellcheck/check]
+          # Use a context to hold your publishing token.
+          context: <publishing-context>
+          filters: *filters
+      # Triggers the next workflow in the Orb Development Kit.
+      - orb-tools/continue:
+          pipeline-number: << pipeline.number >>
+          vcs-type: << pipeline.project.type >>
+          requires: [orb-tools/publish]
+          filters: *filters
