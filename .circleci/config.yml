@@ -2,7 +2,6 @@ version: 2.1
 setup: true
 orbs:
   orb-tools: circleci/orb-tools@11.5
- h sellcheck: circleci/shellcheck@3.1
 
 filters: &filters
   tags:
