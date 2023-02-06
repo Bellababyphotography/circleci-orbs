@@ -18,8 +18,7 @@ jobs:
       - image: singapore/lint-condo
     steps:
       - checkout
-      - run:
-          'yamllint .'
+      - run: "yamllint ."
 
   build:
     executor: cli
